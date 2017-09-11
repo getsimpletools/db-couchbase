@@ -34,37 +34,13 @@
  *
  */
 
-namespace Simpletools\Db\Couchbase;
+namespace Simpletools\Db\Couchbase\Doc;
 
-class Result implements \Iterator
+
+class Body extends Meta
 {
-    public function __construct($response)
+    public function __set($name,$value)
     {
-        print_r($response);
-    }
-
-    public function count(){}
-    public function isEmpty(){}
-    public function fetch(){}
-    public function fetchAll(){}
-
-    public function current(){
-
-    }
-
-    public function next(){
-
-    }
-
-    public function key(){
-
-    }
-
-    public function valid(){
-
-    }
-
-    public function rewind(){
-
+        return $this->_object->{$name} = $value;
     }
 }

@@ -39,14 +39,15 @@ namespace Simpletools\Db\Couchbase;
 class QueryBuilder implements \Iterator
 {
     protected $_ns;
-    protected $_bucket;
+    protected $_bucketName;
     protected $_query = array();
-    protected $_client;
+    protected $_bucket;
+    protected $_docId;
 
-    public function __construct($bucket,$client,$ns=null,$columns=array())
+    public function __construct($bucketName,$bucket,$ns=null,$columns=array())
     {
-        $this->_bucket  = $bucket;
-        $this->_ns      = $ns;
+        $this->_bucketName  = $bucketName;
+        $this->_ns          = $ns;
 
         if($columnsCount = count($columns))
         {
@@ -59,14 +60,130 @@ class QueryBuilder implements \Iterator
         }
 
         $this->ns($ns);
-        $this->_client = $client;
+        $this->_bucket = $bucket;
+    }
+
+    public function doc($id)
+    {
+        $this->_docId = $id;
+        if(isset($this->_query[$id])) unset($this->_query[$id]);
+        $this->_query[$id] = array();
+        return $this;
     }
 
     public function ns($ns)
     {
         $this->_ns = $ns;
+        return $this;
     }
 
+    public function insert(array $data)
+    {
+        $this->_addQueryMethod('insert',$data);
+
+        return $this;
+    }
+
+    public function set(array $data)
+    {
+        $this->_addQueryMethod('upsert',$data);
+
+        return $this;
+    }
+
+    public function unset($data)
+    {
+        if(!is_array($data)) $data = array($data);
+        $this->_addQueryMethod('remove',$data);
+
+        return $this;
+    }
+
+    public function push($data)
+    {
+        if(!is_array($data)) $data = array($data);
+
+        $this->_addQueryMethod('arrayAppendAll',$data);
+        return $this;
+    }
+
+    public function pushUnique($data)
+    {
+        if(!is_array($data)) $data = array($data);
+
+        $this->_addQueryMethod('arrayAddUnique',$data);
+        return $this;
+    }
+
+    public function increment(array $data)
+    {
+        $this->_addQueryMethod('increment',$data);
+        return $this;
+    }
+
+    public function decrement(array $data)
+    {
+        $this->_addQueryMethod('decrement',$data);
+        return $this;
+    }
+
+    public function unshift($data)
+    {
+        if(!is_array($data)) $data = array($data);
+
+        $this->_addQueryMethod('arrayPrependAll',$data);
+        return $this;
+    }
+
+    protected function _addQueryMethod($method,$data)
+    {
+        if(!isset($this->_query[$this->_docId][$method])) $this->_query[$this->_docId][$method] = array();
+        $this->_query[$this->_docId][$method] = $data + $this->_query[$this->_docId][$method];
+    }
+
+    public function run()
+    {
+        print_r($this->_query);
+    }
+
+    public function limit($limit)
+    {
+        $this->_query['limit'] 	= $limit;
+        return $this;
+    }
+
+    public function find()
+    {
+        $args = func_get_args();
+        if(count($args)==1) $args = $args[0];
+
+        $this->_query['where'][] 	= $args;
+
+        return $this;
+    }
+
+    public function where()
+    {
+        return $this->find(func_get_args());
+    }
+
+    public function columns()
+    {
+        $args = func_get_args();
+
+        if(count($args) == 1)
+        {
+            $args = $args[0];
+        }
+
+        $this->_query['columns'] = $args;
+
+        return $this;
+    }
+
+    /*
+     * ITERATOR
+     */
     public function current(){
 
     }

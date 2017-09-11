@@ -34,37 +34,78 @@
  *
  */
 
-namespace Simpletools\Db\Couchbase;
+namespace Simpletools\Db\Couchbase\Doc;
 
-class Result implements \Iterator
+class Meta
 {
-    public function __construct($response)
+    protected $_object;
+
+    public function __construct($object,$setAllLoaded=false)
     {
-        print_r($response);
+        if(
+            $object instanceof Body OR
+            $object instanceof Meta
+        )
+        {
+            $this->_object    = $object->toObject();
+        }
+        else
+        {
+            $this->_object = $object;
+        }
+
+        if($setAllLoaded)
+        {
+            //TODO - marked all paths as to be updated e.g. when loading body directly via ->body-> for set purposes only
+        }
     }
 
-    public function count(){}
-    public function isEmpty(){}
-    public function fetch(){}
-    public function fetchAll(){}
+    public function __toString()
+    {
+        if(is_string($this->_object)) return $this->_object;
+        else return $this->toJson();
+    }
 
-    public function current(){
+    public function toJson($options=JSON_PRETTY_PRINT)
+    {
+        return json_encode($this->_object,$options);
+    }
+
+    public function __isset($name)
+    {
+        return isset($this->_object->{$name});
+    }
+
+    public function __get($name)
+    {
+        if(isset($this->_object->{$name}))
+        {
+            return $this->_object->{$name};
+        }
+        else
+        {
+            throw new \Exception("Requested field property doesn`'t exist or has not been loaded");
+        }
 
     }
 
-    public function next(){
-
+    public function toObject()
+    {
+        return $this->_object;
     }
 
-    public function key(){
+    public function to2d()
+    {
+        $ritit = new \RecursiveIteratorIterator(new \RecursiveArrayIterator((array) $this->_object));
+        $result = array();
+        foreach ($ritit as $leafValue) {
+            $keys = array();
+            foreach (range(0, $ritit->getDepth()) as $depth) {
+                $keys[] = $ritit->getSubIterator($depth)->key();
+            }
+            $result[ join('.', $keys) ] = $leafValue;
+        }
 
-    }
-
-    public function valid(){
-
-    }
-
-    public function rewind(){
-
+        return $result;
     }
 }

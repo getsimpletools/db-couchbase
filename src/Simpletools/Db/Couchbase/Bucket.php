@@ -2,7 +2,7 @@
 
 namespace Simpletools\Db\Couchbase;
 
-class Client
+class Bucket
 {
     protected static $_gSettings    = array();
 
@@ -12,10 +12,11 @@ class Client
     protected $___bucketName;
     protected $___bucket;
 
-    public function __construct(array $settings = null,$connectionName='default')
+    public function __construct($connectionName='default',array $settings = null)
     {
+        $this->___connectionName = $connectionName;
+
         if($settings) {
-            $this->___connectionName = $connectionName;
             self::settings($settings, $connectionName);
         }
     }
@@ -48,7 +49,7 @@ class Client
         $authenticator  = new \Couchbase\ClassicAuthenticator();
         $authenticator->bucket($this->___bucketName, $settings['pass']);
 
-        $cluster        = new CouchbaseCluster($settings['proto'] ? $settings['proto'].'://'.$settings['host'] : $settings['host']);
+        $cluster        = new \CouchbaseCluster(isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']);
         $cluster->authenticate($authenticator);
 
         $this->___bucket = $cluster->openBucket($this->___bucketName);
@@ -69,12 +70,96 @@ class Client
         self::$_gSettings[$connectionName] = $settings;
     }
 
+    protected $_query;
+
+    public function prepare($query)
+    {
+        $this->_query = $query;
+        return $this;
+    }
+
+    public function execute()
+    {
+        $args = func_get_args();
+        if(is_array($args[0])) $args = $args[0];
+
+        return $this->query($this->_prepareQuery($this->_query,$args));
+    }
+
     public function query($query)
     {
-        $query      = CouchbaseN1qlQuery::fromString($query);
+        $this->connect();
+
+        $query      = \CouchbaseN1qlQuery::fromString($query);
         $response   = $this->___bucket->query($query);
 
-        return Result($response);
+        return new Result($response);
+    }
+
+    private function _prepareQuery($query, array $args)
+    {
+        foreach($args as $arg)
+        {
+            if(is_string($arg))
+            {
+                if(strpos($arg,'?') !== false)
+                {
+                    $arg = str_replace('?','<--SimpleCouchbase-QuestionMark-->',$arg);
+                }
+
+                $arg = "'".addslashes($arg)."'";
+            }
+
+            if($arg === null)
+            {
+                $arg = 'NULL';
+            }
+
+            $query = $this->replace_first('?', $arg, $query);
+        }
+
+        if(strpos($query,'<--SimpleCouchbase-QuestionMark-->') !== false)
+        {
+            $query = str_replace('<--SimpleCouchbase-QuestionMark-->','?',$query);
+        }
+
+        return $query;
+    }
+
+    public function replace_first($needle , $replace , $haystack)
+    {
+        $pos = strpos($haystack, $needle);
+
+        if ($pos === false)
+        {
+            // Nothing found
+            return $haystack;
+        }
+
+        return substr_replace($haystack, $replace, $pos, strlen($needle));
+    }
+
+    public function get($id)
+    {
+        $this->connect();
+        return $this->___bucket->get($id);
+    }
+
+    public function getApiConnector()
+    {
+        $this->connect();
+        return $this->___bucket;
+    }
+
+    public function __get($ns)
+    {
+        $this->connect();
+        if(!$this->___bucketName)
+        {
+            throw new \Exception('Please specify your default bucket first');
+        }
+
+        return new QueryBuilder($this->___bucketName,$this->___bucket,$ns);
     }
 
     public function __call($method, $arguments)

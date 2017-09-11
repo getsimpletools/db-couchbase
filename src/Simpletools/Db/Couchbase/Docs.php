@@ -36,35 +36,80 @@
 
 namespace Simpletools\Db\Couchbase;
 
-class Result implements \Iterator
+class Docs  implements \Iterator
 {
-    public function __construct($response)
+    protected $_ids     = array();
+    protected $_docs    = array();
+
+    protected $_bucket;
+    protected $_connectionName = 'default';
+
+    public function __construct(array $ids,$connectionName='default')
     {
-        print_r($response);
+        $this->_ids = $ids;
+        $this->_connectionName = $connectionName;
     }
 
-    public function count(){}
-    public function isEmpty(){}
-    public function fetch(){}
-    public function fetchAll(){}
+    public function connect()
+    {
+        if(!isset($this->_bucket))
+            $this->_bucket  = (new Bucket($this->_connectionName))->getApiConnector();
 
-    public function current(){
-
+        return $this;
     }
 
-    public function next(){
-
+    public function connector()
+    {
+        return $this->_bucket;
     }
 
-    public function key(){
+    public function load()
+    {
+        $this->_loaded = true;
 
+        $docs = $this->
+        connect()->connector()
+            ->get($this->_ids);
+
+        foreach($docs as $key=>$doc)
+        {
+            if($doc->error) {
+                //$this->_docs[$key] = null;
+                continue;
+            }
+            else {
+                $this->_docs[$key] = (new Doc($key))->body($doc->value);
+            }
+        }
+
+        return $this;
     }
 
-    public function valid(){
-
+    /*
+     * ITERATOR
+     */
+    public function current()
+    {
+        return current($this->_docs);
     }
 
-    public function rewind(){
+    public function next()
+    {
+        return next($this->_docs);
+    }
 
+    public function key()
+    {
+        return key($this->_docs);
+    }
+
+    public function valid()
+    {
+        return current($this->_docs)!==false;
+    }
+
+    public function rewind()
+    {
+        return reset($this->_docs);
     }
 }

@@ -36,7 +36,7 @@
 
 	namespace Simpletools\Db\Couchbase;
 
-	class Model extends Client
+	class Model extends Bucket
 	{
         protected static $____selfModel;
         protected $___connectionName;
@@ -76,11 +76,23 @@
 
 		public function getClient()
 		{
-			return Client::getInstance($this->getConnectionName());
+			return Bucket::getInstance($this->getConnectionName());
 		}
 
 		public function injectDependency()
 		{
 			$this->setSettings($this->getClient()->getSettings());
 		}
+
+		public function doc($id,$connectionName=null)
+        {
+            $connectionName = $connectionName ? $connectionName : self::$___connectionName;
+            return new Doc($id,$connectionName);
+        }
+
+        public function docs(array $id,$connectionName=null)
+        {
+            $connectionName = $connectionName ? $connectionName : self::$___connectionName;
+            return new Docs($id,$connectionName);
+        }
 	}
