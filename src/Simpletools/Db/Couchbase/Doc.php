@@ -211,8 +211,6 @@ class Doc
 				$origin = $this->_originBody->toObject();
 
 				$this->getDifference($new,$origin);
-				echo"<pre>";var_dump($origin,$new,$this->_diff);
-
 
 				if($this->_diff['upsert'] || $this->_diff['delete'])
 				{
@@ -236,7 +234,6 @@ class Doc
 
 					$this->_diff['upsert'] = [];
 					$this->_diff['delete'] = [];
-					echo "SAVED\n";
 				}
 
 				$this->_originBody = new Body(json_decode(json_encode($this->_body)));
