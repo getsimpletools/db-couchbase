@@ -10,7 +10,11 @@
             "name": "Marcin Rosinski",
             "email": "marcin@getsimpletools.com",
             "homepage": "http://twitter.com/marcinrosinski"
-        }
+        },
+		{
+		  "name": "Adrian Chwialkowski",
+		  "email": "adrian@molecules.pro"
+		}
     ],
     "require": {
         "php":              ">=5.3.0",

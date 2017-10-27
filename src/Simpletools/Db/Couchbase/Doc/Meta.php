@@ -84,9 +84,8 @@ class Meta
         }
         else
         {
-            throw new \Exception("Requested field property doesn`'t exist or has not been loaded");
+        	return null;
         }
-
     }
 
     public function toObject()

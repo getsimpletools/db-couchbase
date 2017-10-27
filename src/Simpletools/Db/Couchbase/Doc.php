@@ -47,14 +47,22 @@ class Doc
     protected $_body;
     protected $_id;
     protected $_loaded = false;
+		protected $_originBody;
     protected $_connectionName = 'default';
+    protected $_ns;
 
-    public function __construct($id=null,$connectionName='default')
+		protected $_diff = [
+				'upsert' => [],
+				'delete' => [],
+		];
+
+    public function __construct($id=null,$connectionName='default', $ns=null)
     {
         //todo
         if(!$id) $id = uniqid();
 
         $this->_connectionName = $connectionName;
+        $this->_ns = $ns;
 
         $this->_meta = new Meta((object) array(
             'id'    => $id
@@ -78,14 +86,29 @@ class Doc
         return $this->_bucket;
     }
 
-    public function id($id)
+    public function bucket(\Couchbase\Bucket $bucket)
+		{
+			$this->_bucket = $bucket;
+			return $this;
+		}
+
+    public function id($id = null)
     {
+    		if($id === null)
+    			return $this->_id;
+
         $this->_id = $id;
     }
+
+    public function ns($ns)
+		{
+			$this->_ns = $ns;
+		}
 
     public function loaded()
     {
         $this->_loaded = true;
+				$this->_originBody = new Body(unserialize(serialize($this->_body)));
         return $this;
     }
 
@@ -97,29 +120,147 @@ class Doc
             connect()->connector()
             ->get($this->_id);
 
-        return $this
-            ->body($doc->value)
+        $this->body($doc->value)
             ->meta(array(
                 'id'    => $this->_id,
                 'flags'  => $doc->flags,
                 'cas'   => $doc->cas,
                 'token' => $doc->token
             ));
+
+			$this->_originBody = new Body(unserialize(serialize($this->_body)));
+			return $this;
     }
+
+    protected function getDifference($new, $origin, $currentPath = array())
+		{
+			foreach ($new as $k => $v)
+			{
+				$path = $currentPath;
+				$path[] = $k;
+
+				if(is_object($v))
+				{
+					if(isset($origin->{$k}))
+					{
+						if(is_object($origin->{$k}))
+						{
+							$this->getDifference($new->{$k},$origin->{$k}, $path);
+						}
+						else
+						{
+							$this->_diff['upsert'][implode('.',$path)] =  $new->{$k};
+						}
+						unset($origin->{$k});
+					}
+					else
+					{
+						$this->_diff['upsert'][implode('.',$path)] = $new->{$k};
+					}
+				}
+				elseif(is_array($v))
+				{
+					if(isset($origin->{$k}))
+					{
+						if(!is_array($origin->{$k}) || array_diff($v,$origin->{$k}) || array_diff($origin->{$k},$v))
+						{
+							$this->_diff['upsert'][implode('.',$path)] =  $new->{$k};
+						}
+						unset($origin->{$k});
+					}
+					else
+					{
+						$this->_diff['upsert'][implode('.',$path)] = $new->{$k};
+					}
+				}
+				else
+				{
+					if(isset($origin->{$k}))
+					{
+						if($v != $origin->{$k})
+						{
+							$this->_diff['upsert'][implode('.',$path)] =  $new->{$k};
+						}
+						unset($origin->{$k});
+					}
+					else
+					{
+						$this->_diff['upsert'][implode('.',$path)] = $new->{$k};
+					}
+				}
+			}
+
+			if($origin)
+			{
+				foreach ($origin as $k => $v)
+				{
+					$path = $currentPath;
+					$path[] = $k;
+					$this->_diff['delete'][implode('.',$path)] = 1;
+				}
+			}
+		}
+
 
     public function save()
     {
-        $this->connect();
+			if($this->_loaded)
+			{
+				$this->connect();
+				$new = $this->_body->toObject();
+				$origin = $this->_originBody->toObject();
 
-        $raw = $this->_body->toObject();
-        $res = $this->_bucket->upsert($this->_id,$raw);
+				$this->getDifference($new,$origin);
+				echo"<pre>";var_dump($origin,$new,$this->_diff);
 
-        if($res->error)
-        {
-            throw new \Exception($res->error);
-        }
 
-        return $this;
+				if($this->_diff['upsert'] || $this->_diff['delete'])
+				{
+					$mutateIn = $this->_bucket->mutateIn($this->_id);
+
+					foreach ($this->_diff['upsert'] as $k => $v)
+					{
+						$mutateIn->upsert($k, $v, true);
+					}
+
+					foreach ($this->_diff['delete'] as $k => $v)
+					{
+						$mutateIn->remove($k);
+					}
+					$res = $mutateIn->execute();
+
+					if($res->error)
+					{
+						throw new \Exception($res->error);
+					}
+
+					$this->_diff['upsert'] = [];
+					$this->_diff['delete'] = [];
+					echo "SAVED\n";
+				}
+
+				$this->_originBody = new Body(json_decode(json_encode($this->_body)));
+			}
+			else
+			{
+				$this->connect();
+
+				if($this->_ns)
+				{
+					$this->_body->_ns = $this->_ns;
+				}
+				$raw = $this->_body->toObject();
+
+
+				$res = $this->_bucket->upsert($this->_id,$raw);
+
+				if($res->error)
+				{
+					throw new \Exception($res->error);
+				}
+			}
+
+			return $this;
     }
 
     public function remove()
@@ -205,9 +346,42 @@ class Doc
 
         if(is_array($body)) $body = (object)$body;
 
+        foreach ($body as $key => $val)
+				{
+					if(strpos($key,'.') !== false)
+					{
+						$this->convertToNestedBody($body, explode('.',$key), $val);
+						unset($body->{$key});
+					}
+				}
+
         $this->_body = new Body($body, !$this->_loaded);
+
+        if(@$this->_body->_ns)
+				{
+					$this->_ns = $this->_body->_ns;
+				}
+
         return $this;
     }
+
+    protected function convertToNestedBody($body, $keys, $val)
+		{
+			$key = array_shift($keys);
+			if(!isset($body->{$key}))
+			{
+				$body->{$key} = new \stdClass();
+			}
+
+			if($keys)
+			{
+				$this->convertToNestedBody($body->{$key}, $keys, $val);
+			}
+			else
+			{
+				$body->{$key} = $val;
+			}
+		}
 
     public function unset($fields)
     {

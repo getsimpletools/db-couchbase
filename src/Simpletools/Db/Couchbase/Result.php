@@ -38,15 +38,69 @@ namespace Simpletools\Db\Couchbase;
 
 class Result implements \Iterator
 {
-    public function __construct($response)
+		protected $_couchbaseResult;
+		protected $_bucket;
+		protected $_bucketName;
+
+    public function __construct($response, $bucket,$bucketName)
     {
-        print_r($response);
+    	$this->_bucket = $bucket;
+    	$this->_bucketName;
+    	$this->_couchbaseResult = $response;
+
+    	return $this;
     }
 
-    public function count(){}
+    public function count()
+		{
+			return isset($this->_couchbaseResult->rows) ? count($this->_couchbaseResult->rows) : 0;
+
+		}
     public function isEmpty(){}
-    public function fetch(){}
-    public function fetchAll(){}
+
+
+		public function fetchAll()
+		{
+			$docs = new Docs([]);
+			$docs->loaded();
+			$docs->bucket($this->_bucket);
+
+			if(@$this->_couchbaseResult->rows)
+			{
+				foreach ($this->_couchbaseResult->rows as $row)
+				{
+					$id = $row->_id;
+					unset($row->_id);
+					$doc = new Doc($id);
+					$doc->bucket($this->_bucket)
+							->body(@$row->{$this->_bucketName}?:$row)
+							->loaded();
+
+					$docs->addDoc($doc);
+				}
+			}
+
+			return $docs;
+		}
+
+		public function fetch()
+		{
+			$doc = null;
+			if(@$this->_couchbaseResult->rows)
+			{
+				if($row = array_shift($this->_couchbaseResult->rows))
+				{
+					$id = $row->_id;
+					unset($row->_id);
+					$doc = new Doc($id);
+					$doc->bucket($this->_bucket)
+							->body(@$row->{$this->_bucketName}?:$row)
+							->loaded();
+				}
+			}
+
+			return $doc;
+		}
 
     public function current(){
 

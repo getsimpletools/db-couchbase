@@ -11,6 +11,7 @@ class Bucket
 
     protected $___bucketName;
     protected $___bucket;
+    protected $___ns;
 
     public function __construct($connectionName='default',array $settings = null)
     {
@@ -89,41 +90,78 @@ class Bucket
     public function query($query)
     {
         $this->connect();
-
-        $query      = \CouchbaseN1qlQuery::fromString($query);
-        $response   = $this->___bucket->query($query);
-
-        return new Result($response);
+        return new Result($this->___bucket->query($query), $this->___bucket, $this->___bucketName);
     }
+
+    public function fetchAll(\Simpletools\Db\Couchbase\Result $result)
+		{
+			return $result->fetchAll();
+		}
+
+		public function fetch(\Simpletools\Db\Couchbase\Result $result)
+		{
+			return $result->fetch();
+		}
+
+		public function getQuery($args = [])
+		{
+			return $this->_prepareQuery($this->_query,$args);
+		}
 
     private function _prepareQuery($query, array $args)
     {
-        foreach($args as $arg)
-        {
-            if(is_string($arg))
-            {
-                if(strpos($arg,'?') !== false)
-                {
-                    $arg = str_replace('?','<--SimpleCouchbase-QuestionMark-->',$arg);
-                }
+			$paramCounter =1;
 
-                $arg = "'".addslashes($arg)."'";
-            }
+			preg_match('/select\s(.+?)\sfrom\s/is', $query,$match);
+			if(@$match[1])
+			{
+				$originalSelect = $match[1];
+				$newSelect=[];
 
-            if($arg === null)
-            {
-                $arg = 'NULL';
-            }
+				if(strpos(strtolower($originalSelect),'meta().id as _id')=== false)
+				{
+					$newSelect[] = 'meta().id as _id';
+				}
+				if(strpos(strtolower($originalSelect),'_ns')=== false)
+				{
+					$newSelect[] = '_ns';
+				}
 
-            $query = $this->replace_first('?', $arg, $query);
-        }
+				foreach(explode(',',trim($match[1])) as $index => $field)
+				{
+					if(strpos($field,'meta().id') !== false) continue;
 
-        if(strpos($query,'<--SimpleCouchbase-QuestionMark-->') !== false)
-        {
-            $query = str_replace('<--SimpleCouchbase-QuestionMark-->','?',$query);
-        }
+					$field = trim(str_replace('`','',$field));
+					if(strpos($field,'.') !== false && strpos(strtolower($field),'as') === false)
+					{
+						$field = '`'.implode('`.`',explode('.',$field)).'` as `'.$field.'`';
+					}
+					elseif(strpos(strtolower($field),'as') !== false)
+					{
+						$field = str_replace(' AS ', ' as ',$field);
+						$as = explode(' as ',$field);
+						$field = '`'.implode('`.`',explode('.',$as[0])).'` as `'.$as[1].'`';
+					}
+					else
+					{
+						$field = '`'.$field.'`';
+					}
 
-        return $query;
+					$newSelect[] = $field;
+				}
+
+				$query = str_replace($originalSelect, implode(', ',$newSelect), $query);
+			}
+
+			foreach($args as $arg)
+			{
+					$query = $this->replace_first('?', '$'.$paramCounter++, $query);
+			}
+
+			$query = \CouchbaseN1qlQuery::fromString($query);
+			$query->positionalParams($args);
+
+			return $query;
     }
 
     public function replace_first($needle , $replace , $haystack)
@@ -159,7 +197,11 @@ class Bucket
             throw new \Exception('Please specify your default bucket first');
         }
 
-        return new QueryBuilder($this->___bucketName,$this->___bucket,$ns);
+				$this->connect();
+				if($ns)
+					$this->___ns = $ns;
+
+				return new QueryBuilder($this->___bucketName,$this->___bucket,$this->___ns, array(), $this->___connectionName);
     }
 
     public function __call($method, $arguments)
@@ -176,9 +218,12 @@ class Bucket
         );
     }
 
-    public function ns($ns)
+    public function ns($ns=null)
     {
         $this->connect();
-        return new QueryBuilder($this->___bucketName,$this->___bucket,$ns);
+        if($ns)
+        	$this->___ns = $ns;
+
+        return new QueryBuilder($this->___bucketName,$this->___bucket,$this->___ns);
     }
 }

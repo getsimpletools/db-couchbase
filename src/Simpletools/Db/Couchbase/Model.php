@@ -59,7 +59,7 @@
                 return static::$____selfModel[static::class];
 
             $obj = new static();
-            $obj->injectDependency();
+           // $obj->injectDependency(); //todo check whether is needs
 
             if(is_callable(array($obj,'init')))
             {
@@ -84,15 +84,38 @@
 			$this->setSettings($this->getClient()->getSettings());
 		}
 
-		public function doc($id,$connectionName=null)
-        {
-            $connectionName = $connectionName ? $connectionName : self::$___connectionName;
-            return new Doc($id,$connectionName);
-        }
+		public function doc($id =null,$connectionName=null, $ns =null)
+		{
+			$connectionName = $connectionName ? $connectionName : $this->___connectionName;
+			$ns = $ns ?: $this->___ns;
+			return new Doc($id,$connectionName, $ns);
+		}
 
-        public function docs(array $id,$connectionName=null)
-        {
-            $connectionName = $connectionName ? $connectionName : self::$___connectionName;
-            return new Docs($id,$connectionName);
-        }
+		public function docs(array $id,$connectionName=null,$ns =null)
+		{
+			$connectionName = $connectionName ? $connectionName : $this->___connectionName;
+			$ns = $ns ?: $this->___ns;
+			return new Docs($id,$connectionName,$ns);
+		}
+
+		public function getIterator($query,$params=array())
+		{
+			if(!$query) return false;
+
+			$query = trim($query);
+
+			preg_match('/(\w+)\s*('.implode('|',array(
+							'\=', '\>', '\<', '\>\=', '\<\=', '\<\>', '\!\='
+					)).')\s*\:\:(\w+)/i',$query,$matches);
+
+			if(!isset($matches[1]) OR !isset($matches[3]) OR !$matches[1]) return false;
+
+			$settings['query'] 				= trim(str_replace('::'.$matches[3],'::',$query));
+			$settings['start'] 				= $matches[3];
+			$settings['iteratorField'] 		= $matches[1];
+			$settings['iteratorDirection'] 	= $matches[2];
+			$settings['params']				= $params;
+
+			return new \Simpletools\Db\Couchbase\Iterator($this,$settings);
+		}
 	}

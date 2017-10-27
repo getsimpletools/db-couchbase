@@ -43,6 +43,7 @@ class Docs  implements \Iterator
 
     protected $_bucket;
     protected $_connectionName = 'default';
+    protected $_loaded = false;
 
     public function __construct(array $ids,$connectionName='default')
     {
@@ -62,6 +63,19 @@ class Docs  implements \Iterator
     {
         return $this->_bucket;
     }
+
+		public function bucket(\Couchbase\Bucket $bucket)
+		{
+			$this->_bucket = $bucket;
+			return $this;
+		}
+
+		public function loaded()
+		{
+			$this->_loaded = true;
+			return $this;
+		}
+
 
     public function load()
     {
@@ -84,6 +98,24 @@ class Docs  implements \Iterator
 
         return $this;
     }
+
+    public function addDoc(\Simpletools\Db\Couchbase\Doc $doc)
+		{
+			$this->_ids[] = $doc->id();
+			$this->_docs[$doc->id()] = $doc;
+		}
+
+
+    public function getDocs()
+		{
+			return $this->_docs;
+		}
+
+		public function count()
+		{
+			return count($this->_docs);
+		}
+
 
     /*
      * ITERATOR
