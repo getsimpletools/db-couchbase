@@ -47,11 +47,22 @@ class Bucket
         if(!$this->___bucketName)
             $this->___bucketName = $settings['bucket'];
 
-        $authenticator  = new \Couchbase\ClassicAuthenticator();
-        $authenticator->bucket($this->___bucketName, $settings['pass']);
 
-        $cluster        = new \CouchbaseCluster(isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']);
-        $cluster->authenticate($authenticator);
+        if(isset($settings['user']))
+				{
+					$cluster = new \Couchbase\Cluster(isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']);
+					$cluster->authenticateAs($settings['user'], $settings['pass']);
+				}
+				else
+				{
+					$authenticator  = new \Couchbase\ClassicAuthenticator();
+					$authenticator->bucket($this->___bucketName, $settings['pass']);
+
+					$cluster        = new \CouchbaseCluster(isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']);
+					$cluster->authenticate($authenticator);
+				}
+
+
 
         $this->___bucket = $cluster->openBucket($this->___bucketName);
         Connection::setOne($this->___connectionKey,$this->___bucket);
