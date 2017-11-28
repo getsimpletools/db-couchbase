@@ -36,17 +36,18 @@ class Bucket
 
         $settings       = self::$_gSettings[$this->___connectionName];
 
+				if(!$this->___bucketName)
+					$this->___bucketName = $settings['bucket'];
+
         $this->___connectionKey = $this->___connectionName.'/'.$this->___bucketName;
         $connection = Connection::getOne($this->___connectionKey);
+
         if($connection)
         {
             $this->___bucket = $connection;
+						$this->___bucketName = $settings['bucket'];
             return $this;
         }
-
-        if(!$this->___bucketName)
-            $this->___bucketName = $settings['bucket'];
-
 
         if(isset($settings['user']))
 				{
