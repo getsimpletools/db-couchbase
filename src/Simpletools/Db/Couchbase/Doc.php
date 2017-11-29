@@ -128,9 +128,27 @@ class Doc
                 'token' => $doc->token
             ));
 
-			$this->_originBody = new Body(unserialize(serialize($this->_body)));
+			$this->_originBody = new Body(json_decode(json_encode($this->_body)));
 			return $this;
     }
+
+    protected function  arrayDiff($arr1, $arr2)
+		{
+			return array_udiff($arr1, $arr2, function($v1, $v2){
+				if(is_object($v1) && is_object($v2))
+				{
+					return json_encode($v1) === json_encode($v2) ? 0 : -1;
+				}
+				elseif(	is_object($v1) || is_object($v2))
+				{
+					return -1;
+				}
+				else
+				{
+					return $v1 === $v2 ? 0 : -1;
+				}
+			});
+		}
 
     protected function getDifference($new, $origin, $currentPath = array())
 		{
@@ -162,7 +180,10 @@ class Doc
 				{
 					if(isset($origin->{$k}))
 					{
-						if(!is_array($origin->{$k}) || array_diff($v,$origin->{$k}) || array_diff($origin->{$k},$v))
+						//echo"<pre>=================";var_dump($origin->{$k},$v);
+						//echo"<pre>++++++++++++++++";var_dump($this->arrayDiff($v,$origin->{$k}) , $this->arrayDiff($origin->{$k},$v));
+
+						if(!is_array($origin->{$k}) || $this->arrayDiff($v,$origin->{$k}) || $this->arrayDiff($origin->{$k},$v))
 						{
 							$this->_diff['upsert'][implode('.',$path)] =  $new->{$k};
 						}
@@ -175,9 +196,9 @@ class Doc
 				}
 				else
 				{
-					if(isset($origin->{$k}))
+					if(isset($origin->{$k}))//todo
 					{
-						if($v != $origin->{$k})
+						if(gettype ($v) != gettype($origin->{$k}) || $v != $origin->{$k})
 						{
 							$this->_diff['upsert'][implode('.',$path)] =  $new->{$k};
 						}
@@ -202,6 +223,27 @@ class Doc
 		}
 
 
+		public function insert()
+		{
+			$this->connect();
+
+			if($this->_ns)
+			{
+				$this->_body->_ns = $this->_ns;
+			}
+			$raw = $this->_body->toObject();
+
+
+			$res = $this->_bucket->insert($this->_id,$raw);
+
+			if($res->error)
+			{
+				throw new \Exception($res->error);
+			}
+
+			return $this;
+		}
+
     public function save()
     {
 			if($this->_loaded)
@@ -211,6 +253,9 @@ class Doc
 				$origin = $this->_originBody->toObject();
 
 				$this->getDifference($new,$origin);
+			//	$this->_diff['upsert']['engine.variants[0].capacity'] = 2;
+				//echo"<pre>";var_dump($this->_diff);die;//todo
+				
 
 				if($this->_diff['upsert'] || $this->_diff['delete'])
 				{
