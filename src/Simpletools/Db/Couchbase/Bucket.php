@@ -50,19 +50,18 @@ class Bucket
         }
 
         if(isset($settings['user']))
-				{
-					$cluster = new \Couchbase\Cluster( is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']));
-					$cluster->authenticateAs($settings['user'], $settings['pass']);
-				}
-				else
-				{
-					$authenticator  = new \Couchbase\ClassicAuthenticator();
-					$authenticator->bucket($this->___bucketName, $settings['pass']);
+        {
+            $cluster = new \Couchbase\Cluster( is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']));
+            $cluster->authenticateAs($settings['user'], $settings['pass']);
+        }
+        else
+        {
+            $authenticator  = new \Couchbase\ClassicAuthenticator();
+            $authenticator->bucket($this->___bucketName, $settings['pass']);
 
-					$cluster        = new \CouchbaseCluster(is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']));
-					$cluster->authenticate($authenticator);
-				}
-
+            $cluster        = new \CouchbaseCluster(is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']));
+            $cluster->authenticate($authenticator);
+        }
 
 
         $this->___bucket = $cluster->openBucket($this->___bucketName);
@@ -74,6 +73,8 @@ class Bucket
     public static function settings(array $settings,$connectionName='default')
     {
         $connectionName = (isset($settings['connectionName']) ? $settings['connectionName'] : $connectionName);
+
+        $settings['host'] = isset($settings['host']) ? $settings['host'] : @$settings['hosts'];
 
         if(!isset($settings['host']))
         {
