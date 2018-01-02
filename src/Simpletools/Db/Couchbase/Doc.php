@@ -57,7 +57,7 @@ class Doc
 
     public function __construct($id=null,$connectionName='default', $ns=null)
     {
-        if(!$id) $id = Id($ns);
+        if(!$id) $id = new Id($ns);
 
         $this->_connectionName = $connectionName;
         $this->_ns = $ns;
