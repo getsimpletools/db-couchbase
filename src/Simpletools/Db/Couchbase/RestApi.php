@@ -57,7 +57,9 @@ class RestApi
 	public function __construct($connectionName='default')
 	{
 		$settings = Bucket::getSettings($connectionName);
-		$this->_url = is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']) . (isset($settings['port']) ? ':'.$settings['port'] : ':8091');
+		$this->_url = is_array($settings['host'])
+				? $settings['host'][array_rand($settings['host'])] . (isset($settings['port']) ? ':'.$settings['port'] : ':8091')
+				: (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']) . (isset($settings['port']) ? ':'.$settings['port'] : ':8091');
 		$this->_authorization = base64_encode($settings['user'].":".$settings['pass']);
 
 		return $this;
