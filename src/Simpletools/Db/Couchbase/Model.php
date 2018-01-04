@@ -119,7 +119,7 @@
 			return new \Simpletools\Db\Couchbase\Iterator($this,$settings);
 		}
 
-		public function getPrefixIterator($startKey, $endKey=null, $limit=null, $skip=null, $connectionName=null)
+		public function getPrefixIterator($startKey = null, $endKey=null, $limit=null, $skip=null, $connectionName=null)
 		{
 			$connectionName = $connectionName ? $connectionName : $this->___connectionName;
 			return new \Simpletools\Db\Couchbase\PrefixIterator($startKey, $endKey, $limit, $skip, $connectionName);
