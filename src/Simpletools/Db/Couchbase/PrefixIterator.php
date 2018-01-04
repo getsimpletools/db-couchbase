@@ -7,16 +7,17 @@ class PrefixIterator implements \Iterator
 	private $_CBResult 			= null;
 	private $_currentRow		= null;
 	private $_startKey = null;
+	private $_initStartKey = null;
 	private $_endKey = null;
 	private $_limit = 100;
 	private $_skip = 0;
 	private $_includeDocs = true;
-	private $_initSkip = 0;
 	private $_bucket;
 	private $_bucketName;
 	private $_api = '';
+	private $_lastId = null;
 
-	public function __construct($startKey=null, $endKey=null, $limit=null, $skip=null, $includeDocs=true,  $connectionName ='default')
+	public function __construct($startKey=null, $endKey=null, $limit=null, $includeDocs=true,  $connectionName ='default')
 	{
 		$this->_api = new RestApi($connectionName);
 		$this->_bucket  = new Bucket($connectionName);
@@ -24,10 +25,9 @@ class PrefixIterator implements \Iterator
 		$this->_bucket = $this->_bucket->getApiConnector();
 
 		$this->_startKey 	= $startKey;
-		$this->_endKey 		= $endKey === null && $this->_startKey !== null ? $this->_startKey.'zzzzzzzzzzzz' : $endKey;
+		$this->_initStartKey = $this->_startKey;
+		$this->_endKey 		=  $endKey;
 		$this->_limit 		= $limit === null? $this->_limit : $limit;
-		$this->_skip 			= $skip === null? $this->_skip : $skip;
-		$this->_initSkip 	= $this->_skip;
 		$this->_includeDocs = $includeDocs;
 	}
 
@@ -37,6 +37,11 @@ class PrefixIterator implements \Iterator
 				'skip' => $this->_skip,
 				'limit' => $this->_limit,
 		];
+
+		if($this->_lastId !== null)
+		{
+			$this->_startKey = $this->_lastId;
+		}
 
 		if($this->_startKey!==null) 				$data['startkey'] = '"'.$this->_startKey.'"';
 		if($this->_endKey!==null) 					$data['endkey'] 	= '"'.$this->_endKey.'"';
@@ -52,23 +57,26 @@ class PrefixIterator implements \Iterator
 
 	private function _setRow()
 	{
-		if(!$this->_CBResult || !$this->_CBResult->count())
+		if (!$this->_CBResult || !$this->_CBResult->count())
 		{
-			if($this->_CBResult !== null)
-			{
-				$this->_skip += $this->_limit;
-			}
-
 			$this->_runQuery();
 		}
 
 		$this->_currentRow = $this->_CBResult->fetch();
+		if ($this->_currentRow !== null)
+		{
+			$this->_lastId = $this->_currentRow->id();
+			$this->_skip = 1;
+		}
 	}
 
 	function rewind()
 	{
-		$this->_skip = $this->_initSkip;
+		$this->_lastId = null;
 		$this->_CBResult = null;
+		$this->_skip = 0;
+		$this->_currentRow = null;
+		$this->_startKey = $this->_initStartKey;
 	}
 
 	function current()
@@ -89,7 +97,7 @@ class PrefixIterator implements \Iterator
 
 	function valid()
 	{
-		if($this->_CBResult == null && $this->_skip == $this->_initSkip)
+		if($this->_CBResult == null && $this->_lastId === null)
 		{
 			$this->next();
 		}
