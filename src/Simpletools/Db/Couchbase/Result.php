@@ -69,12 +69,22 @@ class Result implements \Iterator
 			{
 				foreach ($this->_couchbaseResult->rows as $row)
 				{
-					$id = $row->_id;
-					unset($row->_id);
-					$doc = new Doc($id);
-					$doc->bucket($this->_bucket)
-							->body(@$row->{$this->_bucketName}?:$row)
-							->loaded();
+					if(@$row->doc->json && $row->id)
+					{
+						$doc = new Doc($row->id);
+						$doc->bucket($this->_bucket)
+								->body($row->doc->json)
+								->loaded();
+					}
+					else
+					{
+						$id = $row->_id;
+						unset($row->_id);
+						$doc = new Doc($id);
+						$doc->bucket($this->_bucket)
+								->body($row->{$this->_bucketName}?:$row)
+								->loaded();
+					}
 
 					$docs->addDoc($doc);
 				}
@@ -90,12 +100,22 @@ class Result implements \Iterator
 			{
 				if($row = array_shift($this->_couchbaseResult->rows))
 				{
-					$id = $row->_id;
-					unset($row->_id);
-					$doc = new Doc($id);
-					$doc->bucket($this->_bucket)
-							->body(@$row->{$this->_bucketName}?:$row)
-							->loaded();
+					if(@$row->doc->json && $row->id)
+					{
+						$doc = new Doc($row->id);
+						$doc->bucket($this->_bucket)
+								->body($row->doc->json)
+								->loaded();
+					}
+					else
+					{
+						$id = $row->_id;
+						unset($row->_id);
+						$doc = new Doc($id);
+						$doc->bucket($this->_bucket)
+								->body($row->{$this->_bucketName}?:$row)
+								->loaded();
+					}
 				}
 			}
 
