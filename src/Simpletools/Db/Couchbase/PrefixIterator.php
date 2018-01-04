@@ -10,12 +10,13 @@ class PrefixIterator implements \Iterator
 	private $_endKey = null;
 	private $_limit = 100;
 	private $_skip = 0;
+	private $_includeDocs = true;
 	private $_initSkip = 0;
 	private $_bucket;
 	private $_bucketName;
 	private $_api = '';
 
-	public function __construct($startKey=null, $endKey=null, $limit=null, $skip=null, $connectionName ='default')
+	public function __construct($startKey=null, $endKey=null, $limit=null, $skip=null, $includeDocs=true,  $connectionName ='default')
 	{
 		$this->_api = new RestApi($connectionName);
 		$this->_bucket  = new Bucket($connectionName);
@@ -27,6 +28,7 @@ class PrefixIterator implements \Iterator
 		$this->_limit 		= $limit === null? $this->_limit : $limit;
 		$this->_skip 			= $skip === null? $this->_skip : $skip;
 		$this->_initSkip 	= $this->_skip;
+		$this->_includeDocs = $includeDocs;
 	}
 
 	private function _runQuery()
@@ -34,17 +36,17 @@ class PrefixIterator implements \Iterator
 		$data = [
 				'skip' => $this->_skip,
 				'limit' => $this->_limit,
-				'include_docs' => 'true',
 		];
 
-		if($this->_startKey!==null) 	$data['startkey'] = '"'.$this->_startKey.'"';
-		if($this->_endKey!==null) 		$data['endkey'] 	= '"'.$this->_endKey.'"';
+		if($this->_startKey!==null) 				$data['startkey'] = '"'.$this->_startKey.'"';
+		if($this->_endKey!==null) 					$data['endkey'] 	= '"'.$this->_endKey.'"';
+		if($this->_includeDocs === true) 		$data['include_docs'] 	= 'true';
 
 		$res = $this->_api->call('/pools/default/buckets/'.$this->_bucketName.'/docs',$data);
 
 		if($res)
 		{
-			$this->_CBResult = new Result($res, $this->_bucket, $this->_bucketName);
+			$this->_CBResult = new Result($res, $this->_bucket, $this->_bucketName, true);
 		}
 	}
 

@@ -41,12 +41,14 @@ class Result implements \Iterator
 		protected $_couchbaseResult;
 		protected $_bucket;
 		protected $_bucketName;
+		protected $_isRestApi;
 
-    public function __construct($response, $bucket,$bucketName)
+    public function __construct($response, $bucket,$bucketName, $isRestApi = false)
     {
     	$this->_bucket = $bucket;
     	$this->_bucketName;
     	$this->_couchbaseResult = $response;
+    	$this->_isRestApi = $isRestApi;
 
     	return $this;
     }
@@ -69,11 +71,11 @@ class Result implements \Iterator
 			{
 				foreach ($this->_couchbaseResult->rows as $row)
 				{
-					if(@$row->doc->json && $row->id)
+					if($this->_isRestApi)
 					{
 						$doc = new Doc($row->id);
 						$doc->bucket($this->_bucket)
-								->body($row->doc->json)
+								->body(@$row->doc->json)
 								->loaded();
 					}
 					else
@@ -82,7 +84,7 @@ class Result implements \Iterator
 						unset($row->_id);
 						$doc = new Doc($id);
 						$doc->bucket($this->_bucket)
-								->body($row->{$this->_bucketName}?:$row)
+								->body(@$row->{$this->_bucketName}?:$row)
 								->loaded();
 					}
 
@@ -100,11 +102,11 @@ class Result implements \Iterator
 			{
 				if($row = array_shift($this->_couchbaseResult->rows))
 				{
-					if(@$row->doc->json && $row->id)
+					if($this->_isRestApi)
 					{
 						$doc = new Doc($row->id);
 						$doc->bucket($this->_bucket)
-								->body($row->doc->json)
+								->body(@$row->doc->json)
 								->loaded();
 					}
 					else
@@ -113,7 +115,7 @@ class Result implements \Iterator
 						unset($row->_id);
 						$doc = new Doc($id);
 						$doc->bucket($this->_bucket)
-								->body($row->{$this->_bucketName}?:$row)
+								->body(@$row->{$this->_bucketName}?:$row)
 								->loaded();
 					}
 				}

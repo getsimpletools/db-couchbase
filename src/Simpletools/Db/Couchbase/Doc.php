@@ -376,7 +376,7 @@ class Doc
     public function body($body=null)
     {
         if($body===null)
-            return $this->_body;
+            return $this;
 
         if($body instanceof Body)
         {
