@@ -65,8 +65,14 @@ class PrefixIterator implements \Iterator
 		$this->_currentRow = $this->_CBResult->fetch();
 		if ($this->_currentRow !== null)
 		{
-			$this->_lastId = $this->_currentRow->id();
-			$this->_skip = 1;
+			if($this->_lastId == $this->_currentRow->id())
+			{
+				$this->_currentRow = $this->_CBResult->fetch();
+			}
+			if ($this->_currentRow !== null)
+			{
+				$this->_lastId = $this->_currentRow->id();
+			}
 		}
 	}
 
@@ -74,7 +80,6 @@ class PrefixIterator implements \Iterator
 	{
 		$this->_lastId = null;
 		$this->_CBResult = null;
-		$this->_skip = 0;
 		$this->_currentRow = null;
 		$this->_startKey = $this->_initStartKey;
 	}
