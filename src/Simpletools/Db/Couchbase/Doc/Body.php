@@ -41,6 +41,9 @@ class Body extends Meta
 {
     public function __set($name,$value)
     {
-        return $this->_object->{$name} = $value;
+    	if(is_object($this->_object))
+    		return $this->_object->{$name} = $value;
+    	else
+				$this->_object = $value;
     }
 }

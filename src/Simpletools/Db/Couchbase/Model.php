@@ -111,7 +111,7 @@
 			if(!isset($matches[1]) OR !isset($matches[3]) OR !$matches[1]) return false;
 
 			$settings['query'] 				= trim(str_replace('::'.$matches[3],'::',$query));
-			$settings['start'] 				= $matches[3];
+			$settings['start'] 				= is_numeric($matches[3])? $matches[3]:"'".$matches[3]."'";
 			$settings['iteratorField'] 		= $matches[1];
 			$settings['iteratorDirection'] 	= $matches[2];
 			$settings['params']				= $params;

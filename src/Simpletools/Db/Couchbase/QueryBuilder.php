@@ -247,8 +247,15 @@ class QueryBuilder implements \Iterator
 			{
 				if(!isset($operands[2]))
 				{
-					if($operands[1]===null) {
-						$query[] = @$operands[-1] . ' ' . $this->escapeKey($operands[0]) . " IS NULL";
+					if(@$operands[1]===null) {
+						if($operands[0] instanceof N1ql)
+						{
+							$query[] = @$operands[-1] . ' ' . $operands[0];
+						}
+						else
+						{
+							$query[] = @$operands[-1] . ' ' . $this->escapeKey($operands[0]) . " IS NULL";
+						}
 					}
 					else{
 

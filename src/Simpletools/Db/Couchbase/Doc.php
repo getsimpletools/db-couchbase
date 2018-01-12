@@ -386,14 +386,17 @@ class Doc
 
         if(is_array($body)) $body = (object)$body;
 
-        foreach ($body as $key => $val)
-        {
-            if(strpos($key,'.') !== false)
-            {
-                $this->convertToNestedBody($body, explode('.',$key), $val);
-                unset($body->{$key});
-            }
-        }
+        if(is_object($body))
+				{
+					foreach ($body as $key => $val)
+					{
+						if(strpos($key,'.') !== false)
+						{
+							$this->convertToNestedBody($body, explode('.',$key), $val);
+							unset($body->{$key});
+						}
+					}
+				}
 
         $this->_body = new Body($body, !$this->_loaded);
 
