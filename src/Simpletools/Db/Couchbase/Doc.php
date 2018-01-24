@@ -436,11 +436,11 @@ class Doc
     {
         if($name=='body')
         {
-            return !isset($this->_body) ? ($this->_body = new Body($this->_body)) : $this->_body;
+            return  $this->_body->toObject();
         }
         elseif($name=='meta')
         {
-            return !isset($this->_meta) ? ($this->_meta = new Meta($this->_meta)) : $this->_meta;
+            return  $this->_meta->toObject();
         }
     }
 
