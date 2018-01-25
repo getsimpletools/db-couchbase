@@ -36,7 +36,7 @@
 
 namespace Simpletools\Db\Couchbase\Doc;
 
-class Meta
+class Meta implements \JsonSerializable
 {
     protected $_object;
 
@@ -60,6 +60,10 @@ class Meta
         }
     }
 
+		public function jsonSerialize() {
+			return $this->_object;
+		}
+
     public function __toString()
     {
         if(is_string($this->_object)) return $this->_object;
@@ -70,6 +74,11 @@ class Meta
     {
         return json_encode($this->_object,$options);
     }
+
+		public function toArray()
+		{
+			return json_decode(json_encode($this->_object), true);
+		}
 
     public function __isset($name)
     {
