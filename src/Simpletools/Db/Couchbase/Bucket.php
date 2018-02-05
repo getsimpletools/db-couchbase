@@ -2,6 +2,7 @@
 
 namespace Simpletools\Db\Couchbase;
 
+
 class Bucket
 {
     protected static $_gSettings    = array();
@@ -36,6 +37,12 @@ class Bucket
 
         $settings       = self::$_gSettings[$this->___connectionName];
 
+				$clientSettings = '';
+				if(@$settings['clientSettings'] && is_array($settings['clientSettings']))
+				{
+					$clientSettings = '?'.http_build_query($settings['clientSettings']);
+				}
+
 				if(!$this->___bucketName)
 					$this->___bucketName = $settings['bucket'];
 
@@ -51,7 +58,8 @@ class Bucket
 
         if(isset($settings['user']))
         {
-            $cluster = new \Couchbase\Cluster( is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']) . (isset($settings['port']) ? ':'.$settings['port'] : ''));
+						$uri = is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']) . (isset($settings['port']) ? ':'.$settings['port'] : '');
+            $cluster = new \Couchbase\Cluster( $uri.$clientSettings);
             $cluster->authenticateAs($settings['user'], $settings['pass']);
         }
         else
@@ -59,7 +67,8 @@ class Bucket
             $authenticator  = new \Couchbase\ClassicAuthenticator();
             $authenticator->bucket($this->___bucketName, $settings['pass']);
 
-            $cluster        = new \CouchbaseCluster(is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']) . (isset($settings['port']) ? ':'.$settings['port'] : ''));
+            $uri = is_array($settings['host']) ? implode(',',$settings['host']) : (isset($settings['proto']) ? $settings['proto'].'://'.$settings['host'] : $settings['host']) . (isset($settings['port']) ? ':'.$settings['port'] : '');
+            $cluster        = new \CouchbaseCluster($uri.$clientSettings);
             $cluster->authenticate($authenticator);
         }
 

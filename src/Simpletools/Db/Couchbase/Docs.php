@@ -36,7 +36,7 @@
 
 namespace Simpletools\Db\Couchbase;
 
-class Docs  implements \Iterator
+class Docs  implements \Iterator, \JsonSerializable
 {
     protected $_ids     = array();
     protected $_docs    = array();
@@ -116,6 +116,26 @@ class Docs  implements \Iterator
 			return count($this->_docs);
 		}
 
+		public function toJson($options=JSON_PRETTY_PRINT)
+		{
+			return json_encode($this, $options);
+		}
+
+		public function toArray()
+		{
+			return json_decode(json_encode($this), true);
+		}
+
+		public function jsonSerialize()
+		{
+			$arr = [];
+			foreach ($this->_docs as $doc)
+			{
+				$arr[] =  $doc->body;
+			}
+
+			return $arr;
+		}
 
     /*
      * ITERATOR
