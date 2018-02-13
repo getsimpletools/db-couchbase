@@ -111,10 +111,16 @@ class Bucket
         $args = func_get_args();
         if(is_array($args[0])) $args = $args[0];
 
-        return $this->query($this->_prepareQuery($this->_query,$args));
+        return $this->_query($this->_prepareQuery($this->_query,$args));
     }
 
-    public function query($query)
+		public function query($query)
+		{
+			$this->_query = $query;
+			return $this->_query($this->_prepareQuery($this->_query,[]));
+		}
+
+    protected function _query($query)
     {
         $this->connect();
         return new Result($this->___bucket->query($query), $this->___bucket, $this->___bucketName);
