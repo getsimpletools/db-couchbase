@@ -85,6 +85,11 @@ class Meta implements \JsonSerializable
         return isset($this->_object->{$name});
     }
 
+		public function __unset($name)
+		{
+			unset($this->_object->{$name});
+		}
+
     public function __get($name)
     {
         if(isset($this->_object->{$name}))
