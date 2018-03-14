@@ -63,7 +63,8 @@ class Doc
         $this->_ns = $ns;
 
         $this->_meta = new Meta((object) array(
-            'id'    => $id
+            'id'    => $id,
+            'expiry' => 0
         ));
 
         $this->_body = new Body((object) array());
@@ -96,6 +97,24 @@ class Doc
             return (string) $this->_id;
 
         $this->_id = $id;
+    }
+
+    public function expire($expire = null)
+    {
+        if(empty($expire)){
+            return (int)@$this->_meta->expiry;
+        }
+        if(!is_int($expire)){
+            throw new Exception("The parameter of expire must be a integer.");
+        }
+        if($expire < time() && $expire > 30*24*60*60)
+        {
+            throw new Exception("Expire needs to be less then 30 days or in future timestamp.");
+        }
+
+        $this->_meta->expiry = $expire;
+
+        return $this;
     }
 
     public function ns($ns)
@@ -232,7 +251,7 @@ class Doc
 
         $raw = $this->_body->toObject();
 
-        $res = $this->_bucket->insert((string) $this->_id,$raw);
+        $res = $this->_bucket->insert((string) $this->_id,$raw, $this->_getOptionForSave());
 
         if($res->error)
         {
@@ -292,7 +311,7 @@ class Doc
             $raw = $this->_body->toObject();
 
 
-            $res = $this->_bucket->upsert((string) $this->_id,$raw);
+            $res = $this->_bucket->upsert((string) $this->_id,$raw, $this->_getOptionForSave());
 
             if($res->error)
             {
@@ -301,6 +320,16 @@ class Doc
         }
 
         return $this;
+    }
+
+    protected function _getOptionForSave()
+    {
+        $option = [];
+        if(@$this->_meta->expiry){
+            $option['expiry'] = $this->_meta->expiry;
+        }
+
+        return $option;
     }
 
     public function remove()
