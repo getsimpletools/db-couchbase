@@ -23,9 +23,13 @@ class Bucket
         }
     }
 
-    public function bucket($bucket)
+    public function bucket($bucket = null)
     {
-        $this->___bucketName = $bucket;
+    	if(empty($bucket)){
+    		return $this->___bucketName;
+		}else{
+			$this->___bucketName = $bucket;
+		}
     }
 
     public function connect()

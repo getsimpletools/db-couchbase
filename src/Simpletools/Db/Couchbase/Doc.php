@@ -41,7 +41,9 @@ use Simpletools\Db\Couchbase\Doc\Meta;
 
 class Doc
 {
+	/* @var $_bucket \Couchbase\Bucket */
     protected $_bucket;
+    protected $_bucketName;
     protected $_meta;
     protected $_body;
     protected $_id;
@@ -64,7 +66,7 @@ class Doc
 
         $this->_meta = new Meta((object) array(
             'id'    => $id,
-            'expiry' => 0
+            'expiration' => 0
         ));
 
         $this->_body = new Body((object) array());
@@ -74,8 +76,11 @@ class Doc
 
     public function connect()
     {
-        if(!isset($this->_bucket))
-            $this->_bucket  = (new Bucket($this->_connectionName))->getApiConnector();
+        if(!isset($this->_bucket)){
+        	$bucket = (new Bucket($this->_connectionName));
+			$this->_bucket  = $bucket->getApiConnector();
+        	$this->_bucketName = $bucket->bucket();
+		}
 
         return $this;
     }
@@ -102,7 +107,7 @@ class Doc
     public function expire($expire = null)
     {
         if(empty($expire)){
-            return (int)@$this->_meta->expiry;
+            return (int)@$this->_meta->expiration;
         }
         if(!is_int($expire)){
             throw new Exception("The parameter of expire must be a integer.");
@@ -112,7 +117,7 @@ class Doc
             throw new Exception("Expire needs to be less then 30 days or in future timestamp.");
         }
 
-        $this->_meta->expiry = $expire;
+        $this->_meta->expiration = $expire;
 
         return $this;
     }
@@ -149,6 +154,18 @@ class Doc
         $this->_originBody = new Body(json_decode(json_encode($this->_body)));
         return $this;
     }
+
+	public function loadMeta()
+	{
+		$this->connect();
+		$query = \CouchbaseN1qlQuery::fromString('SELECT META() FROM `'.$this->_bucketName.'` USE KEYS [$1]');
+		$query->positionalParams([(string)$this->id()]);
+		$doc = $this->_bucket->query($query);
+		if(!empty($doc->rows)){
+			$this->meta((array)array_shift($doc->rows)->{'$1'});
+		}
+		return $this;
+	}
 
     protected function  arrayDiff($arr1, $arr2)
     {
@@ -280,7 +297,7 @@ class Doc
 
                 foreach ($this->_diff['upsert'] as $k => $v)
                 {
-                    $mutateIn->upsert($k, $v, true);
+                    $mutateIn->upsert($k, $v, $this->_getOptionForSave());
                 }
 
                 foreach ($this->_diff['delete'] as $k => $v)
@@ -325,8 +342,8 @@ class Doc
     protected function _getOptionForSave()
     {
         $option = [];
-        if(@$this->_meta->expiry){
-            $option['expiry'] = $this->_meta->expiry;
+        if(@$this->_meta->expiration){
+            $option['expiry'] = $this->_meta->expiration;
         }
 
         return $option;
