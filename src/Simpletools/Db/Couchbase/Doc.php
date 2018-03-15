@@ -118,6 +118,7 @@ class Doc
         }
 
         $this->_meta->expiration = $expire;
+        $this->_body->_expiry = $expire;
 
         return $this;
     }
@@ -148,7 +149,8 @@ class Doc
                 'id'    => (string) $this->_id,
                 'flags'  => $doc->flags,
                 'cas'   => $doc->cas,
-                'token' => $doc->token
+                'token' => $doc->token,
+				'expiration' => (@$doc->value->_expiry)?$doc->value->_expiry:0
             ));
 
         $this->_originBody = new Body(json_decode(json_encode($this->_body)));
@@ -297,13 +299,16 @@ class Doc
 
                 foreach ($this->_diff['upsert'] as $k => $v)
                 {
-                    $mutateIn->upsert($k, $v, $this->_getOptionForSave());
+                    $mutateIn->upsert($k, $v, true);
                 }
 
                 foreach ($this->_diff['delete'] as $k => $v)
                 {
                     $mutateIn->remove($k);
                 }
+				if($this->expire()){
+					$mutateIn->withExpiry($this->expire());
+				}
                 $res = $mutateIn->execute();
 
                 if($res->error)
