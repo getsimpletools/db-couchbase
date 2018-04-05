@@ -90,7 +90,7 @@ class Meta implements \JsonSerializable
 			unset($this->_object->{$name});
 		}
 
-    public function __get($name)
+    public function &__get($name)
     {
         if(isset($this->_object->{$name}))
         {
