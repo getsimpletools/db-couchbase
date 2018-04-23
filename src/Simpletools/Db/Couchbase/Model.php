@@ -61,7 +61,7 @@
             $obj = new static();
            // $obj->injectDependency(); //todo check whether is needs
 
-            if(is_callable(array($obj,'init')))
+            if(method_exists($obj, 'init') && is_callable(array($obj,'init')))
             {
                 call_user_func_array(array($obj,'init'),func_get_args());
             }

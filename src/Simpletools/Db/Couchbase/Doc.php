@@ -126,6 +126,8 @@ class Doc
     public function ns($ns)
     {
         $this->_ns = $ns;
+
+        return $this;
     }
 
     public function loaded()
@@ -307,7 +309,7 @@ class Doc
                     $mutateIn->remove($k);
                 }
 				if($this->expire()){
-					$mutateIn->withExpiry($this->expire());
+                    $mutateIn->withExpiry($this->expire());
 				}
                 $res = $mutateIn->execute();
 

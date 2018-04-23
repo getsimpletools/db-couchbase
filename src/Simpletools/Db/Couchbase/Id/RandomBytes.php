@@ -10,24 +10,38 @@ class RandomBytes extends Couchbase\Id
     protected $_id;
     protected $_ns = '';
     protected static $_length = 20;
+    protected $_olength;
 
     public function __construct($ns='')
     {
         if($ns)
             $this->_ns = $ns.static::$_separator;
+
+        $this->_olength = self::$_length;
     }
 
-    public static function entropy($entropy=null)
+    public function entropy($entropy=null)
     {
-        if(!$entropy) return self::$_length;
-        else self::$_length = (int) $entropy;
+        if(!$entropy) return $this->_olength;
+        else $this->_olength = (int) $entropy;
 
-        return self::$_length;
+        return $this;
+    }
+
+    public static function __callStatic($name, $arguments)
+    {
+        if ($name == 'entropy')
+        {
+            if($arguments)
+                self::$_length = (int) $arguments[0];
+            else
+                return self::$_length;
+        }
     }
 
     protected function _generate()
     {
-        $length = self::$_length;
+        $length = $this->_olength;
 
         if(!$this->_id) {
             //$time = round(microtime(true) * 1000);
