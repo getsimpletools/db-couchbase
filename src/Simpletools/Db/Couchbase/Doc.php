@@ -69,6 +69,10 @@ class Doc
             'expiration' => 0
         ));
 
+        if($id instanceof Id) {
+            $this->_meta->pid = $id->pid();
+        }
+
         $this->_body = new Body((object) array());
 
         $this->_id = $id;
@@ -102,6 +106,7 @@ class Doc
             return (string) $this->_id;
 
         $this->_id = $id;
+        return $this;
     }
 
     public function expire($expire = null)
@@ -146,9 +151,12 @@ class Doc
             connect()->connector()
             ->get((string) $this->_id);
 
+        $publicId = (string) (new Id())->id($this->_id)->pid();
+
         $this->body($doc->value)
             ->meta(array(
                 'id'    => (string) $this->_id,
+                'pid' => $publicId,
                 'flags'  => $doc->flags,
                 'cas'   => $doc->cas,
                 'token' => $doc->token,
