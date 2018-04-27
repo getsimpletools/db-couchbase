@@ -84,7 +84,7 @@ class Result implements \Iterator
 						unset($row->_id);
 						$doc = new Doc($id);
 						$doc->bucket($this->_bucket)
-								->body(@$row->{$this->_bucketName}?:$row)
+								->body(isset($row->{$this->_bucketName})? $row->{$this->_bucketName}:$row)
 								->loaded();
 					}
 
@@ -115,7 +115,7 @@ class Result implements \Iterator
 						unset($row->_id);
 						$doc = new Doc($id);
 						$doc->bucket($this->_bucket)
-								->body(@$row->{$this->_bucketName}?:$row)
+								->body(isset($row->{$this->_bucketName})? $row->{$this->_bucketName}:$row)
 								->loaded();
 					}
 				}
