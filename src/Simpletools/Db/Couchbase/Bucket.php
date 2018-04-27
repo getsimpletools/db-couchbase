@@ -179,6 +179,7 @@ class Bucket
 						$as = explode(' as ',$field);
 						$field = '`'.implode('`.`',explode('.',$as[0])).'` as `'.$as[1].'`';
 					}
+					elseif($field =='*'){}
 					else
 					{
 						$field = '`'.$field.'`';
@@ -219,6 +220,18 @@ class Bucket
         $this->connect();
         return $this->___bucket->get($id);
     }
+
+	public function remove($id)
+	{
+		$this->connect();
+		return $this->___bucket->remove($id);
+	}
+
+	public function upsert($id, $value, $options = [])
+	{
+		$this->connect();
+		return $this->___bucket->upsert($id, $value, $options);
+	}
 
     public function getApiConnector()
     {

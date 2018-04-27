@@ -53,12 +53,12 @@
 			}
 		}
 
-        public static function self()
+        public static function self($settings=false,$connectionName='default')
         {
             if(isset(static::$____selfModel[static::class]))
                 return static::$____selfModel[static::class];
 
-            $obj = new static();
+            $obj = new static($settings,$connectionName);
            // $obj->injectDependency(); //todo check whether is needs
 
             if(method_exists($obj, 'init') && is_callable(array($obj,'init')))

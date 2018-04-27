@@ -46,7 +46,7 @@ class Result implements \Iterator
     public function __construct($response, $bucket,$bucketName, $isRestApi = false)
     {
     	$this->_bucket = $bucket;
-    	$this->_bucketName;
+    	$this->_bucketName = $bucketName;
     	$this->_couchbaseResult = $response;
     	$this->_isRestApi = $isRestApi;
 
