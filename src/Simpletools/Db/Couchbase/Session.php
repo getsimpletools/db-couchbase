@@ -36,7 +36,7 @@
 
 namespace Simpletools\Db\Couchbase;
 
-class Session
+class Session implements \SessionHandlerInterface
 {
 	protected static $_self;
 	private $_prefix = 'ses';
