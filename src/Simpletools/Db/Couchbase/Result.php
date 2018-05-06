@@ -124,6 +124,14 @@ class Result implements \Iterator
 			return $doc;
 		}
 
+		/**
+		 * @return array - Fields:  lapsedTime, executionTime, resultCount, resultSize, mutationCount (eg. Updated rows)
+		 */
+		public function getMetrics()
+		{
+			return isset($this->_couchbaseResult->metrics) ? $this->_couchbaseResult->metrics : [];
+		}
+
     public function current(){
 
     }
