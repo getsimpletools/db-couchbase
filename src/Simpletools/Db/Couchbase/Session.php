@@ -102,7 +102,9 @@ class Session implements \SessionHandlerInterface
 
 	public function destroy($id)
 	{
-		setcookie(session_name(), null, -1,'/');
+		try{
+			$this->_cb->doc($this->_prefix."_".$id)->load()->remove();
+		}catch (\Exception $e){}
 		return true;
 	}
 
