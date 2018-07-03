@@ -80,12 +80,15 @@ class Result implements \Iterator
 					}
 					else
 					{
-						$id = $row->_id;
+						$id = @$row->_id;
 						unset($row->_id);
 						$doc = new Doc($id);
 						$doc->bucket($this->_bucket)
-								->body(isset($row->{$this->_bucketName})? $row->{$this->_bucketName}:$row)
-								->loaded();
+								->body(isset($row->{$this->_bucketName})? $row->{$this->_bucketName}:$row);
+
+						if($id !== null)
+							$doc->loaded();
+
 					}
 
 					$docs->addDoc($doc);
@@ -111,12 +114,14 @@ class Result implements \Iterator
 					}
 					else
 					{
-						$id = $row->_id;
+						$id = @$row->_id;
 						unset($row->_id);
 						$doc = new Doc($id);
 						$doc->bucket($this->_bucket)
-								->body(isset($row->{$this->_bucketName})? $row->{$this->_bucketName}:$row)
-								->loaded();
+								->body(isset($row->{$this->_bucketName})? $row->{$this->_bucketName}:$row);
+
+						if($id !== null)
+							$doc->loaded();
 					}
 				}
 			}

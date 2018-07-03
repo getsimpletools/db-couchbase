@@ -149,47 +149,51 @@ class Bucket
     {
 			$paramCounter =1;
 
-			preg_match('/select\s(.+?)\sfrom\s/is', $query,$match);
-			if(@$match[1])
+			if($query instanceof N1ql === false)
 			{
-				$originalSelect = $match[1];
-				$newSelect=[];
-
-				if(strpos(strtolower($originalSelect),'meta().id as _id')=== false)
+				preg_match('/select\s(.+?)\sfrom\s/is', $query,$match);
+				if(@$match[1])
 				{
-					$newSelect[] = 'meta().id as _id';
-				}
-				if(strpos(strtolower($originalSelect),'_ns')=== false)
-				{
-					$newSelect[] = '_ns';
-				}
+					$originalSelect = $match[1];
+					$newSelect=[];
 
-				foreach(explode(',',trim($match[1])) as $index => $field)
-				{
-					if(strpos($field,'meta().id') !== false) continue;
-
-					$field = trim(str_replace('`','',$field));
-					if(strpos($field,'.') !== false && strpos(strtolower($field),'as') === false)
+					if(strpos(strtolower($originalSelect),'meta().id as _id')=== false)
 					{
-						$field = '`'.implode('`.`',explode('.',$field)).'` as `'.$field.'`';
+						$newSelect[] = 'meta().id as _id';
 					}
-					elseif(strpos(strtolower($field),'as') !== false)
+					if(strpos(strtolower($originalSelect),'_ns')=== false)
 					{
-						$field = str_replace(' AS ', ' as ',$field);
-						$as = explode(' as ',$field);
-						$field = '`'.implode('`.`',explode('.',$as[0])).'` as `'.$as[1].'`';
-					}
-					elseif($field =='*'){}
-					else
-					{
-						$field = '`'.$field.'`';
+						$newSelect[] = '_ns';
 					}
 
-					$newSelect[] = $field;
-				}
+					foreach(explode(',',trim($match[1])) as $index => $field)
+					{
+						if(strpos($field,'meta().id') !== false) continue;
 
-				$query = str_replace($originalSelect, implode(', ',$newSelect), $query);
+						$field = trim(str_replace('`','',$field));
+						if(strpos($field,'.') !== false && strpos(strtolower($field),'as') === false)
+						{
+							$field = '`'.implode('`.`',explode('.',$field)).'` as `'.$field.'`';
+						}
+						elseif(strpos(strtolower($field),'as') !== false)
+						{
+							$field = str_replace(' AS ', ' as ',$field);
+							$as = explode(' as ',$field);
+							$field = '`'.implode('`.`',explode('.',$as[0])).'` as `'.$as[1].'`';
+						}
+						elseif($field =='*'){}
+						else
+						{
+							$field = '`'.$field.'`';
+						}
+
+						$newSelect[] = $field;
+					}
+
+					$query = str_replace($originalSelect, implode(', ',$newSelect), $query);
+				}
 			}
+
 
 			foreach($args as $arg)
 			{
