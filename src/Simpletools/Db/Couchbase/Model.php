@@ -51,6 +51,8 @@
 			{
 				parent::__construct($settings,$connectionName);
 			}
+
+			$this->___bucketName = @self::$_gSettings[$this->___connectionName]['bucket'];
 		}
 
         public static function self($settings=false,$connectionName='default')
