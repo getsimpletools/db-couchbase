@@ -447,6 +447,8 @@ class Doc
 
         if(is_array($body)) $body = (object)$body;
 
+				if(is_string($body)) $body = json_decode($body);
+
         if(is_object($body))
 				{
 					foreach ($body as $key => $val)
