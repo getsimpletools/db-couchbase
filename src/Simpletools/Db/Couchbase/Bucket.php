@@ -78,6 +78,16 @@ class Bucket
 
 
         $this->___bucket = $cluster->openBucket($this->___bucketName);
+
+        if(isset($settings['operationTimeout']) && is_int($settings['operationTimeout'])){
+            $this->___bucket->operationTimeout = $settings['operationTimeout'];
+
+        }
+
+        if(isset($settings['n1qlTimeout']) && is_int($settings['n1qlTimeout'])){
+            $this->___bucket->n1qlTimeout = $settings['n1qlTimeout'];
+        }
+
         Connection::setOne($this->___connectionKey,$this->___bucket);
 
         return $this;
