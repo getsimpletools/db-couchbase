@@ -161,7 +161,7 @@ class QueryBuilder implements \Iterator
 	{
 		$paramCounter = 1;
 		$params = array();
-		
+
 		if(!isset($this->_query['type']))
 			$this->_query['type']		= "SELECT";
 
@@ -206,7 +206,7 @@ class QueryBuilder implements \Iterator
 						$as = explode(' as ',$field);
 						$field = '`'.implode('`.`',explode('.',$as[0])).'` as `'.$as[1].'`';
 					}
-					else
+					elseif($field !='*')
 					{
 						$field = '`'.$field.'`';
 					}
