@@ -92,7 +92,7 @@ class Meta implements \JsonSerializable
 
     public function &__get($name)
     {
-        if(isset($this->_object->{$name}))
+        if(property_exists($this->_object, $name))
         {
             return $this->_object->{$name};
         }
