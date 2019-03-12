@@ -206,7 +206,7 @@ class Doc
 
             if(is_object($v))
             {
-                if(isset($origin->{$k}))
+                if(property_exists($origin, $k))
                 {
                     if(is_object($origin->{$k}))
                     {
@@ -225,7 +225,7 @@ class Doc
             }
             elseif(is_array($v))
             {
-                if(isset($origin->{$k}))
+                if(property_exists($origin, $k))
                 {
                     //echo"<pre>=================";var_dump($origin->{$k},$v);
                     //echo"<pre>++++++++++++++++";var_dump($this->arrayDiff($v,$origin->{$k}) , $this->arrayDiff($origin->{$k},$v));
@@ -243,7 +243,7 @@ class Doc
             }
             else
             {
-                if(isset($origin->{$k}))//todo
+                if(property_exists($origin, $k))//todo
                 {
                     if(gettype ($v) != gettype($origin->{$k}) || $v != $origin->{$k})
                     {
