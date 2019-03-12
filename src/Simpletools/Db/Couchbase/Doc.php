@@ -145,11 +145,11 @@ class Doc
 
     public function load()
     {
-        $this->_loaded = true;
-
         $doc = $this->
             connect()->connector()
             ->get((string) $this->_id);
+
+				$this->_loaded = true;
 
         $publicId = (string) (new Id())->id($this->_id)->pid();
 
