@@ -131,6 +131,7 @@ class Doc
     public function ns($ns)
     {
         $this->_ns = $ns;
+				$this->_body->_ns = $this->_ns;
 
         return $this;
     }
@@ -463,10 +464,14 @@ class Doc
 
         $this->_body = new Body($body, !$this->_loaded);
 
-        if(@$this->_body->_ns)
+        if(isset($this->_body->_ns))
         {
             $this->_ns = $this->_body->_ns;
         }
+				elseif(isset($this->_ns))
+				{
+					$this->_body->_ns = $this->_ns;
+				}
 
         return $this;
     }
