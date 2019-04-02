@@ -34,7 +34,7 @@ class Iterator implements \Iterator
 			$this->_cursor = $this->_model->query(str_replace('::',''.$this->_currentId.'',$this->_query));
 		else
 			$this->_cursor = $this->_model->prepare(str_replace('::',''.$this->_currentId.'',$this->_query))->execute($this->_params);
-		
+
 	}
 
 	private function _setRow()
@@ -51,7 +51,7 @@ class Iterator implements \Iterator
 
 		if($row)
 		{
-			$this->_currentId 	= $row->body->{$this->_iteratorField};
+			$this->_currentId 	= "'".$row->body->{$this->_iteratorField}."'";
 			$this->_currentRow = $row;
 		}
 	}
