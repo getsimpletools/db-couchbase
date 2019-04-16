@@ -34,7 +34,7 @@ class Id
     public function pid()
     {
         if($this->_publicId===null) {
-            $id = explode(self::separator(), (string)$this->_id);
+            $id = explode(self::separator(), (string)$this);
             $this->_publicId = end($id);
         }
 
